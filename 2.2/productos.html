@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos</title>
+  <link rel="stylesheet" href="estilo.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <nav>
+    <ul style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: auto; padding: 10px 20px; list-style: none;">
+      <div style="display: flex; gap: 20px;">
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="medicos.html">Médicos</a></li>
+    <li><a href="productos.html">Productos</a></li>
+    <li><a href="ubihora.html">Ubicación y Horario de Atención</a></li>
+    <li><a href="contacto.html">Contáctanos</a></li>
+      </div>
+      <li class="nav-carrito">
+        <span><img src="Carrito.png" alt="Carrito" style="width:20px; vertical-align:middle; margin-right:5px;"><strong>Carrito</strong> (<span id="contador">0</span>)</span>
+        <div class="carrito-menu">
+          <ul id="items-carrito"></ul>
+          <p style="font-weight:bold;">Total: Q<span id="total">0.00</span></p>
+          <button onclick="vaciarCarrito()">Vaciar</button>
+          <button onclick="comprar()">Comprar</button>
+        </div>
+      </li>
+    </ul>
+  </nav>
+
+  <!---->
+  <main>
+    <section class="productos">
+      <div id="lista-productos" class="productos-grid"></div>
+    </section>
+  </main> 
+
+  <footer>
+    <p>Síguenos en redes sociales:</p>
+    <a href="#">Facebook</a> <a href="#">Instagram</a> <a href="#">Twitter</a>
+  </footer>
+
+<script>
+  const productos = [
+    { id: 1, nombre: "Acetaminofen", descripcion: "Alivia el dolor y reduce la fiebre.", precio: 50, imagen: "Acetaminofen.webp"},
+    { id: 2, nombre: "Amoxicilina", descripcion: "Antibiótico de amplio espectro.", precio: 65, imagen: "Amoxicilina.png"},
+    { id: 3, nombre: "Ambroxol", descripcion: "Mucolítico y expectorante.", precio: 80, imagen: "Ambroxol.jpg"}, 
+    { id: 4, nombre: "Omeprazol", descripcion: "Protector gástrico.", precio: 90, imagen: "Omeprazol.jpg"},
+    { id: 5, nombre: "Probiotico+Prebiotico", descripcion: "Mejora la flora intestinal.", precio: 100, imagen: "Probiotico+Prebiotico.jpg"}
+  ];
+
+  let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+  function renderProductos() {
+    const contenedor = document.getElementById('lista-productos');
+    contenedor.innerHTML = '';
+    productos.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'producto';
+      div.innerHTML = `
+        <img src="${p.imagen}" alt="${p.nombre}">
+        <h3>${p.nombre}</h3>
+        <p>${p.descripcion}</p>
+        <p><strong>Q${p.precio.toFixed(2)}</strong></p>
+        <button onclick="agregarCarrito(${p.id})">Agregar al carrito</button>
+      `;
+      contenedor.appendChild(div);
+    });
+  }
+
+  function agregarCarrito(id) {
+    const index = carrito.findIndex(p => p.id === id);
+    if (index !== -1) {
+      carrito[index].cantidad++;
+    } else {
+      const producto = productos.find(p => p.id === id);
+      carrito.push({ ...producto, cantidad: 1 });
+    }
+    Swal.fire({
+      icon: 'info',
+      title: '¡Producto añadido!',
+      text: 'El producto se ha agregado correctamente al carrito.',
+      background: '#e6f0ff',
+      color: '#004080',
+      confirmButtonColor: '#004080',
+      confirmButtonText: 'Aceptar',
+      position: 'center'
+    });
+    actualizarCarrito();
+  }
+
+  function eliminarProducto(id) {
+    const i = carrito.findIndex(p => p.id === id);
+    if (i !== -1) {
+      carrito[i].cantidad--;
+      if (carrito[i].cantidad <= 0) carrito.splice(i, 1);
+      actualizarCarrito();
+    }
+  }
+
+  function vaciarCarrito() {
+    carrito.length = 0;
+    actualizarCarrito();
+  }
+
+  function actualizarCarrito() {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+    const cantidadTotal = carrito.reduce((a, b) => a + b.cantidad, 0);
+    const total = carrito.reduce((s, p) => s + p.precio * p.cantidad, 0);
+    document.getElementById('contador').textContent = cantidadTotal;
+    document.getElementById('total').textContent = total.toFixed(2);
+    const lista = document.getElementById('items-carrito');
+    lista.innerHTML = '';
+    carrito.forEach((item) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        ${item.nombre} x${item.cantidad} - Q${(item.precio * item.cantidad).toFixed(2)}
+        <span>
+          <button onclick="agregarCarrito(${item.id})">+</button>
+          <button onclick="eliminarProducto(${item.id})">-</button>
+        </span>
+      `;
+      lista.appendChild(li);
+    });
+  }
+
+  function comprar() {
+    if (carrito.length === 0) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Tu carrito está vacío',
+        text: 'Agrega al menos un producto antes de continuar.',
+        background: '#fff3cd',
+        color: '#856404',
+        confirmButtonColor: '#004080',
+        timer: 2500,
+        showConfirmButton: false,
+        position: 'center'
+      });
+      return;
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: '¡Compra realizada exitosamente!',
+      text: 'Gracias por confiar en Hospital Central. Pronto te contactaremos.',
+      background: '#f0f4f8',
+      color: '#004080',
+      confirmButtonText: 'Cerrar',
+      confirmButtonColor: '#004080',
+      position: 'center'
+    });
+    vaciarCarrito();
+  }
+
+  renderProductos();
+  actualizarCarrito();
+</script>
+</body>
+</html>
